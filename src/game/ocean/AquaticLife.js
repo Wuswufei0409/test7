@@ -66,6 +66,25 @@ function inBounds(x, y, z, opts) {
   return x >= x0 && x <= x1 && z >= z0 && z <= z1 && y >= y0 && y <= y1;
 }
 
+function cellAt(x, y, z) {
+  return [Math.floor(x), Math.floor(y), Math.floor(z)];
+}
+
+function isFishPositionValid(world, x, y, z, bounds) {
+  if (!inBounds(x, y, z, bounds)) return false;
+  return world.isWater(...cellAt(x, y, z));
+}
+
+function isDolphinPositionValid(world, x, y, z, bounds, dolphin, leaping) {
+  if (!inBounds(x, y, z, bounds)) return false;
+  const cell = cellAt(x, y, z);
+  if (world.isSolid(...cell)) return false;
+  // Dolphins normally remain in water. During a leap they may occupy the open
+  // air immediately above the waterline, but never arbitrary dry terrain.
+  if (world.isWater(...cell)) return true;
+  return leaping && y >= dolphin.surface && y <= dolphin.surface + 1.4;
+}
+
 /**
  * Advance a wandering fish by dt. It swims along `yaw`; when it would leave the
  * water column or hit solid terrain it picks a new random heading (and returns
@@ -89,15 +108,12 @@ export function updateFish(fish, world, dt, opts = {}) {
   ny += (targetY - ny) * 0.3 * dt;
 
   let bounced = false;
-  if (!world.isWater(Math.floor(nx), Math.floor(fish.y), Math.floor(nz))) {
+  if (isFishPositionValid(world, nx, ny, nz, bounds)) {
+    fish.x = nx; fish.y = ny; fish.z = nz;
+  } else {
     fish.yaw = Math.random() * Math.PI * 2;
     bounced = true;
-  } else if (!world.isWater(Math.floor(fish.x), Math.floor(ny), Math.floor(fish.z))) {
-    bounced = true;
-  } else {
-    fish.x = nx; fish.y = ny; fish.z = nz;
   }
-  if (!inBounds(fish.x, fish.y, fish.z, bounds)) bounced = true;
   return { bounced };
 }
 
@@ -110,6 +126,9 @@ export function updateDolphin(dolphin, world, dt, opts = {}) {
   const player = opts.player;
   const followRange = opts.followRange ?? 6;
   const speed = (opts.speedFactor ?? 1) * dolphin.speed;
+  let nx = dolphin.x;
+  let ny = dolphin.y;
+  let nz = dolphin.z;
 
   let following = false;
   if (player) {
@@ -119,18 +138,18 @@ export function updateDolphin(dolphin, world, dt, opts = {}) {
       // Head toward the player, keep near the surface so it can leap.
       const dx = player.x - dolphin.x, dz = player.z - dolphin.z;
       dolphin.yaw = Math.atan2(dx, dz);
-      dolphin.x += Math.sin(dolphin.yaw) * speed * dt;
-      dolphin.z += Math.cos(dolphin.yaw) * speed * dt;
-      dolphin.y += (dolphin.surface - 0.5 - dolphin.y) * 0.27 * dt;
+      nx += Math.sin(dolphin.yaw) * speed * dt;
+      nz += Math.cos(dolphin.yaw) * speed * dt;
+      ny += (dolphin.surface - 0.5 - ny) * 0.27 * dt;
     }
   }
 
   if (!following) {
     // Roam near its anchor at the surface band.
     if (Math.random() < (opts.retarget ?? 0.04)) dolphin.yaw = Math.random() * Math.PI * 2;
-    dolphin.x += Math.sin(dolphin.yaw) * speed * dt;
-    dolphin.z += Math.cos(dolphin.yaw) * speed * dt;
-    dolphin.y += (dolphin.surface - 0.5 - dolphin.y) * 0.2 * dt;
+    nx += Math.sin(dolphin.yaw) * speed * dt;
+    nz += Math.cos(dolphin.yaw) * speed * dt;
+    ny += (dolphin.surface - 0.5 - ny) * 0.2 * dt;
   }
 
   // Leaping: periodically pop above the surface then fall back.
@@ -140,20 +159,22 @@ export function updateDolphin(dolphin, world, dt, opts = {}) {
     dolphin.leapTimer = (opts.leapInterval ?? 4) + Math.random() * 2;
   }
   if (dolphin.leaping) {
-    dolphin.y += speed * 0.6 * dt;
-    if (dolphin.y >= dolphin.surface + 1.4) {
-      dolphin.y = dolphin.surface + 1.4;
+    ny += speed * 0.6 * dt;
+    if (ny >= dolphin.surface + 1.4) {
+      ny = dolphin.surface + 1.4;
       dolphin.leaping = false;
     }
   }
 
-  // Never swim into solid terrain or out of bounds.
-  if (world.isSolid(Math.floor(dolphin.x), Math.floor(dolphin.y), Math.floor(dolphin.z))) {
+  // Validate the complete candidate before committing any coordinate. A failed
+  // move leaves the dolphin at its last valid position instead of briefly
+  // entering a block or escaping the basin.
+  if (isDolphinPositionValid(world, nx, ny, nz, bounds, dolphin, dolphin.leaping)) {
+    dolphin.x = nx;
+    dolphin.y = ny;
+    dolphin.z = nz;
+  } else {
     dolphin.yaw = Math.random() * Math.PI * 2;
-  }
-  if (!inBounds(dolphin.x, dolphin.y, dolphin.z, bounds)) {
-    dolphin.x = Math.max(bounds.x0 ?? -10, Math.min(bounds.x1 ?? 10, dolphin.x));
-    dolphin.z = Math.max(bounds.z0 ?? -10, Math.min(bounds.z1 ?? 10, dolphin.z));
   }
   return { following, leaping: dolphin.leaping };
 }

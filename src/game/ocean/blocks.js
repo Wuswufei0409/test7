@@ -40,7 +40,7 @@ export const SOLID = {
 
 /** Non-solid decorative/plant blocks (can be walked through / render as sprites). */
 export const PLANT = {
-  coralFan: { id: B.CORAL_FAN, solid: false, opaque: false, solidHeight: 0 },
-  kelp: { id: B.KELP, solid: false, opaque: false, solidHeight: 0 },
-  seagrass: { id: B.SEAGRASS, solid: false, opaque: false, solidHeight: 0 },
+  coralFan: { id: B.CORAL_FAN, solid: false, water: true, opaque: false, solidHeight: 0 },
+  kelp: { id: B.KELP, solid: false, water: true, opaque: false, solidHeight: 0 },
+  seagrass: { id: B.SEAGRASS, solid: false, water: true, opaque: false, solidHeight: 0 },
 };

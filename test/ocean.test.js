@@ -40,6 +40,13 @@ test('ocean basin is contained water (no leak over shore rim)', () => {
   assert.equal(w.isWater(-11, 3, 0), false, 'no water outside the basin');
 });
 
+test('ocean has an open surface above its interior', () => {
+  const w = new VoxelWorld({ seed: 9 });
+  buildOcean(w, { seed: 9 });
+  assert.equal(w.isSolid(0, 5, 0), false, 'interior above the waterline is open air');
+  assert.equal(w.isWater(0, 4, 0), true, 'open air sits above surface water');
+});
+
 test('ocean contains coral reef, kelp, seagrass, iceberg, shipwreck, ruins', () => {
   const w = new VoxelWorld({ seed: 9 });
   buildOcean(w, { seed: 9 });
@@ -156,15 +163,41 @@ test('fish swim and stay in the water', () => {
   const fish = new Fish('cod', 2, 2, 2, { level: 3 });
   // Deterministic-ish: run many steps, the fish must remain inside the basin water.
   let moved = false;
-  for (let i = 0; i < 1200 && !moved; i++) {
+  for (let i = 0; i < 1200; i++) {
     const before = [fish.x, fish.y, fish.z];
     updateFish(fish, w, dt, { bounds: BOUNDS });
     moved = moved || fish.x !== before[0] || fish.z !== before[2];
     // no fish may ever leave to solid terrain
     assert.equal(w.isSolid(Math.floor(fish.x), Math.floor(fish.y), Math.floor(fish.z)), false,
       `fish did not swim into solid (${Math.floor(fish.x)},${Math.floor(fish.y)},${Math.floor(fish.z)})`);
+    assert.equal(w.isWater(Math.floor(fish.x), Math.floor(fish.y), Math.floor(fish.z)), true,
+      'fish remains in water throughout the long run');
+    assert.ok(fish.x >= BOUNDS.x0 && fish.x <= BOUNDS.x1 && fish.z >= BOUNDS.z0 && fish.z <= BOUNDS.z1,
+      `fish remains within horizontal bounds (${fish.x}, ${fish.z})`);
   }
   assert.ok(moved, 'fish swam to a different location');
+});
+
+test('fish rejects an out-of-bounds candidate without committing it', () => {
+  const w = new VoxelWorld({ seed: 9 });
+  buildOcean(w, { seed: 9 });
+  const fish = new Fish('cod', 9.99, 2, 0, { yaw: Math.PI / 2, level: 3 });
+  const before = [fish.x, fish.y, fish.z];
+  const result = updateFish(fish, w, 1, { bounds: BOUNDS, retarget: 0 });
+  assert.equal(result.bounced, true);
+  assert.deepEqual([fish.x, fish.y, fish.z], before, 'invalid candidate is not committed');
+});
+
+test('dolphin rejects a solid collision candidate without committing it', () => {
+  const w = new VoxelWorld({ seed: 9 });
+  buildOcean(w, { seed: 9 });
+  w.setBlock(0, 3, 1, { id: 1, solid: true });
+  const dol = new Dolphin(0, 3, 0, { yaw: 0, speed: 1 });
+  dol.leapTimer = 10;
+  const before = [dol.x, dol.y, dol.z];
+  updateDolphin(dol, w, 1, { bounds: BOUNDS, retarget: 0 });
+  assert.deepEqual([dol.x, dol.y, dol.z], before, 'solid candidate is not committed');
+  assert.equal(w.isSolid(Math.floor(dol.x), Math.floor(dol.y), Math.floor(dol.z)), false);
 });
 
 test('dolphin swims around and follows a nearby player', () => {
@@ -173,19 +206,26 @@ test('dolphin swims around and follows a nearby player', () => {
   const dol = new Dolphin(3, 3, 3);
   // roaming swim motion
   let moved = false;
-  for (let i = 0; i < 60 && !moved; i++) {
+  for (let i = 0; i < 600; i++) {
     const bx = dol.x, bz = dol.z;
     updateDolphin(dol, w, dt, { bounds: BOUNDS });
     moved = moved || dol.x !== bx || dol.z !== bz;
+    assert.equal(w.isSolid(Math.floor(dol.x), Math.floor(dol.y), Math.floor(dol.z)), false,
+      'dolphin remains outside solid blocks while roaming');
+    assert.ok(dol.x >= BOUNDS.x0 && dol.x <= BOUNDS.x1 && dol.z >= BOUNDS.z0 && dol.z <= BOUNDS.z1,
+      `dolphin remains within horizontal bounds (${dol.x}, ${dol.z})`);
   }
   assert.ok(moved, 'dolphin swims (basic swimming motion)');
   // Following: place a player next to the dolphin, dolphin should approach.
+  const follower = new Dolphin(3, 3, 3);
   const p = new Player({ x: 0, y: 3, z: 0 });
-  const d0 = Math.hypot(dol.x - p.x, dol.z - p.z);
+  const d0 = Math.hypot(follower.x - p.x, follower.z - p.z);
   for (let i = 0; i < 300; i++) {
-    updateDolphin(dol, w, dt, { player: p, followRange: 8, bounds: BOUNDS });
+    updateDolphin(follower, w, dt, { player: p, followRange: 8, bounds: BOUNDS });
+    assert.equal(w.isSolid(Math.floor(follower.x), Math.floor(follower.y), Math.floor(follower.z)), false,
+      'dolphin remains outside solid blocks while following');
   }
-  const d1 = Math.hypot(dol.x - p.x, dol.z - p.z);
+  const d1 = Math.hypot(follower.x - p.x, follower.z - p.z);
   assert.ok(d1 < d0, `dolphin approached the player (${d0.toFixed(2)} → ${d1.toFixed(2)})`);
 });
 

@@ -54,8 +54,8 @@ export function buildOcean(world, opts = {}) {
   }
   // Water column.
   world.fillBox(x0, floorY + 1, z0, x1, seaLevel, z1, { id: B.WATER, water: true, solid: false });
-  // Shore rim (solid land above water) on all four edges.
-  world.fillBox(x0, shoreY, z0, x1, shoreY + 1, z1, { ...SOLID.sand }); // outer ring top
+  // Shore rim (solid land above water) on all four edges. Keep the interior
+  // above the waterline empty so this remains an open ocean, not a sealed tank.
   world.fillBox(x0, seaLevel + 1, z0, x0, shoreY + 1, z1, { ...SOLID.sand });
   world.fillBox(x1, seaLevel + 1, z0, x1, shoreY + 1, z1, { ...SOLID.sand });
   world.fillBox(x0, seaLevel + 1, z0, x1, shoreY + 1, z0, { ...SOLID.sand });
