@@ -17,6 +17,8 @@ import { Sky } from './render/Sky.js';
 import { FirstPersonCamera } from './render/FirstPersonCamera.js';
 import { HUD } from './ui/HUD.js';
 import { FirstPersonHand } from './ui/FirstPersonHand.js';
+import { raycastVoxel } from './game/interaction/Raycast.js';
+import { SelectionHighlight } from './game/interaction/SelectionHighlight.js';
 import './style.css';
 
 const SEED = 20260913;
@@ -38,6 +40,9 @@ export function start(opts = {}) {
   const cam = new FirstPersonCamera(camera, renderer.domElement);
   cam.spawnY = world.heightAt(cam.spawnX, cam.spawnZ) + 2.62;
   const hand = new FirstPersonHand(camera, atlas);
+  const highlight = new SelectionHighlight(scene);
+  const lookDirection = new THREE.Vector3();
+  let selectedBlock = null;
 
   // ---- build visible voxel world ----
   const opaqueMeshes = [];
@@ -106,6 +111,15 @@ export function start(opts = {}) {
     const dt = Math.min(clock.getDelta(), 0.1);
     cam.update(dt);
     sky.update(camera);
+    camera.getWorldDirection(lookDirection);
+    selectedBlock = raycastVoxel(
+      { getBlock: (x, y, z) => world.blockAt(x, y, z) },
+      camera.position.toArray(),
+      lookDirection.toArray(),
+      8,
+    );
+    if (selectedBlock) highlight.show(selectedBlock.position);
+    else highlight.hide();
     // keep first-person hand attached to camera (already parented)
     renderer.render(scene, camera);
   }
@@ -122,6 +136,8 @@ export function start(opts = {}) {
     scene,
     hud,
     hand,
+    highlight,
+    get selectedBlock() { return selectedBlock; },
     resize,
     chunk: { opaque: opaqueMeshes, transparent: transparentMeshes },
   };

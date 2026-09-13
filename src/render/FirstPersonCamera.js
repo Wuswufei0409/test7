@@ -52,7 +52,7 @@ export class FirstPersonCamera {
   spawn() {
     this.camera.position.set(this.spawnX, this.spawnY, this.spawnZ);
     this.yaw = Math.PI * 0.25; // look toward interesting terrain
-    this.pitch = -0.12;
+    this.pitch = -0.35;
   }
 
   update(dt) {
@@ -61,4 +61,3 @@ export class FirstPersonCamera {
     this.camera.quaternion.setFromEuler(e);
   }
 }
-
