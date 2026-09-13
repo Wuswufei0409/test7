@@ -1,0 +1,19 @@
+{
+  "name": "bedrock-web-voxel",
+  "version": "0.1.0",
+  "description": "Web-based first-person 3D voxel sandbox, high-fidelity homage to Minecraft Bedrock Edition 1.4.2 (Update Aquatic phase 1). R1: world/render core.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
