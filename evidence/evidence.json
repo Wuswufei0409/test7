@@ -1,0 +1,78 @@
+{
+  "url": "http://127.0.0.1:4199",
+  "chrome": "/home/yinwf2/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome",
+  "blockingConsoleErrors": [],
+  "pageErrors": [],
+  "stats": {
+    "hasWebGL": true,
+    "canvasWidth": 1600,
+    "canvasHeight": 900,
+    "seed": 20260913,
+    "opaqueMeshes": 25,
+    "transparentMeshes": 0,
+    "selectedBlock": [
+      3,
+      36,
+      3
+    ],
+    "highlightVisible": true,
+    "crosshairCenter": [
+      800,
+      450
+    ],
+    "hotbarRect": [
+      515,
+      832,
+      1085,
+      890
+    ],
+    "statsRect": [
+      14,
+      844,
+      176.4375,
+      886
+    ]
+  },
+  "compactStats": {
+    "canvasWidth": 640,
+    "canvasHeight": 480,
+    "crosshairCenter": [
+      320,
+      240
+    ],
+    "hotbarRect": [
+      80,
+      422,
+      560,
+      470
+    ],
+    "statsRect": [
+      14,
+      370,
+      176.4375,
+      412
+    ]
+  },
+  "resizeStats": {
+    "canvasWidth": 1280,
+    "canvasHeight": 800,
+    "clientWidth": 1280,
+    "clientHeight": 800,
+    "crosshairCenter": [
+      640,
+      400
+    ],
+    "hotbarRect": [
+      355,
+      732,
+      925,
+      790
+    ]
+  },
+  "screenshots": [
+    "r1_1600x900.png",
+    "r1_1024x640.png",
+    "r1_640x480.png",
+    "r1_1280x800.png"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "bedrock-web-voxel",
+  "version": "0.1.0",
+  "description": "Web-based first-person 3D voxel sandbox inspired by Bedrock 1.4.2.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/*.test.js",
+    "evidence": "npm run build && node scripts/evidence-screenshot.mjs",
+    "evidence-gameplay": "npm run build && node scripts/gameplay-e2e.mjs",
+    "evidence-m2": "npm run build && node scripts/m2-e2e.mjs",
+    "verify-gameplay": "node demo/verify-gameplay.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0",
+    "vite": "^8.3.0"
+  }
+}

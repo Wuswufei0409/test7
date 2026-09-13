@@ -1,0 +1,316 @@
+/* style.css — R1 (MUL-34) HUD + layout. Cascade order below canvas. */
+
+:root {
+  --hud-slot: 54px;
+  --hud-gap: 6px;
+  --hud-inactive: rgba(0, 0, 0, 0.42);
+  --hud-active: rgba(136, 214, 255, 0.85);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+#app canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* ---------------- HUD overlay ---------------- */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  color: #fff;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Crosshair */
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  opacity: 1;
+}
+.crosshair.dim { opacity: 0.4; }
+.crosshair .ch-b, .crosshair .ch-t, .crosshair .ch-l, .crosshair .ch-r {
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.7);
+}
+.crosshair .ch-b { left: 9px; top: 13px; width: 2px; height: 7px; }
+.crosshair .ch-t { left: 9px; top: 0; width: 2px; height: 7px; }
+.crosshair .ch-l { left: 0; top: 9px; width: 7px; height: 2px; }
+.crosshair .ch-r { left: 13px; top: 9px; width: 7px; height: 2px; }
+
+/* Stats (health / hunger / oxygen) lower-left */
+.stats {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-row {
+  display: flex;
+  gap: 1px;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.heart { color: #e33; }
+.heart-empty { color: rgba(80,20,20,0.7); }
+.heart-half { color: #e66; }
+.shank { color: #c97f2d; }
+.shank-empty { color: rgba(90,60,20,0.7); }
+.shank-half { color: #e0a04f; }
+
+.oxygen { margin-top: 4px; }
+.oxygen.hidden { display: none; }
+.oxy-bg { fill: rgba(0,0,0,0.45); }
+.oxy-fill { fill: #66ccff; }
+
+/* Hotbar bottom-center */
+.hotbar {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--hud-gap);
+}
+.slot {
+  width: var(--hud-slot);
+  height: var(--hud-slot);
+  background: var(--hud-inactive);
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.slot.selected {
+  border-color: var(--hud-active);
+  background: rgba(30, 60, 90, 0.6);
+}
+.slot-num {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+.slot-box {
+  width: 26px;
+  height: 26px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.slot-name {
+  position: absolute;
+  bottom: 2px;
+  font-size: 9px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* Held item chip above hotbar */
+.held-chip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--hud-slot) + 24px);
+  transform: translateX(-50%);
+  background: var(--hud-inactive);
+  padding: 3px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+.action-status, .save-status {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: rgba(0,0,0,.55);
+  font-size: 12px;
+}
+.action-status { top: 12px; }
+.save-status { top: 42px; color: #9fe7a4; }
+.save-status.error { color: #ffb0a8; border: 1px solid rgba(255,90,70,.65); }
+.save-status.hidden { display: none; }
+
+.inventory-panel {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(510px, calc(100vw - 24px));
+  transform: translate(-50%, -50%);
+  padding: 14px;
+  border: 3px solid #252525;
+  background: #c6c6c6;
+  box-shadow: inset 2px 2px #fff, inset -2px -2px #555, 0 8px 35px #000a;
+  color: #222;
+  text-shadow: none;
+  z-index: 3;
+}
+.inventory-panel.hidden { display: none; }
+.inventory-title { margin-bottom: 10px; font-weight: 700; }
+.inventory-title span { float: right; font-size: 11px; font-weight: 400; }
+.inventory-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.inventory-slot {
+  aspect-ratio: 1;
+  min-width: 0;
+  white-space: pre-line;
+  overflow: hidden;
+  padding: 2px;
+  border: 2px solid #777;
+  border-top-color: #333;
+  border-left-color: #333;
+  background: #8b8b8b;
+  color: #fff;
+  font-size: 9px;
+  line-height: 1.15;
+}
+.inventory-slot.hotbar-slot { background: #727272; }
+.inventory-slot.selected { outline: 2px solid #f3f38a; }
+
+.crafting-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(720px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 24px));
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  padding: 14px;
+  overflow: hidden;
+  border: 3px solid #252525;
+  background: #c6c6c6;
+  box-shadow: inset 2px 2px #fff, inset -2px -2px #555, 0 8px 35px #000a;
+  color: #222;
+  text-shadow: none;
+}
+.crafting-panel.hidden { display: none; }
+.crafting-panel header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.crafting-panel header span { font-size: 12px; }
+.crafting-panel nav { display: flex; gap: 6px; margin-bottom: 12px; }
+.crafting-panel button {
+  border: 2px solid #777;
+  border-top-color: #eee;
+  border-left-color: #eee;
+  background: #999;
+  color: #171717;
+  cursor: pointer;
+}
+.crafting-panel button.active { background: #7ea066; color: #fff; }
+.crafting-panel button:disabled { opacity: .42; cursor: not-allowed; }
+.crafting-content { display: grid; grid-template-columns: 230px 1fr; gap: 14px; }
+.crafting-grid {
+  --craft-grid: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--craft-grid), 58px);
+  gap: 6px;
+  align-content: start;
+  min-height: 190px;
+  padding: 12px;
+  background: #aaa;
+}
+.crafting-grid div {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #666;
+  background: #858585;
+  color: #fff;
+  font-size: 10px;
+  text-align: center;
+}
+.crafting-output { margin-top: 8px; padding: 8px; min-height: 20px; background: #e2e2e2; font-size: 12px; }
+.recipe-book { min-width: 0; }
+.recipe-heading { margin-bottom: 6px; font-weight: 700; }
+.recipe-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 470px; overflow-y: auto; }
+.recipe-list button { min-height: 54px; padding: 7px; text-align: left; }
+.recipe-list b, .recipe-list span { display: block; overflow-wrap: anywhere; }
+.recipe-list span { margin-top: 3px; font-size: 10px; opacity: .85; }
+
+/* Click-to-play veil */
+.veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 22, 0.55);
+  text-align: center;
+  z-index: 2;
+}
+.veil.hidden { display: none; }
+.veil-title {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 24px rgba(90, 180, 255, 0.5);
+}
+.veil-sub { margin-top: 6px; font-size: 16px; opacity: 0.85; }
+.veil-cta {
+  margin-top: 22px;
+  display: inline-block;
+  padding: 10px 26px;
+  background: rgba(90, 180, 255, 0.2);
+  border: 1px solid rgba(150, 210, 255, 0.6);
+  border-radius: 6px;
+  font-size: 15px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Responsive: shrink hotbar on narrow windows without breaking layout */
+@media (max-width: 640px) {
+  :root {
+    --hud-slot: 44px;
+  }
+  .stats {
+    bottom: calc(var(--hud-slot) + 24px);
+  }
+  .veil-title { font-size: 28px; }
+  .action-status { max-width: 90vw; white-space: nowrap; overflow: hidden; }
+  .crafting-content { grid-template-columns: 155px 1fr; }
+  .crafting-grid { grid-template-columns: repeat(var(--craft-grid), 40px); padding: 8px; }
+  .crafting-grid div { width: 36px; height: 36px; }
+  .recipe-list { grid-template-columns: 1fr; max-height: 390px; }
+}
