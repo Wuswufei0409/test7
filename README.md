@@ -14,7 +14,9 @@
 src/game/
   world/      World 契约 + 体素存储（R2/R3 共用）
   player/     R3 玩家控制：物理 + 输入控制器
-demo/         R3 交互演示与可复现验证
+  water/      M4 水体核心：氧气/溺水/能见度/掉落物上浮/水下放置
+  （R4+ 各模块由对应成员维护，集成于主干）
+demo/         R3/M4 交互演示与可复现验证
 test/         自动化测试
 ```
 
@@ -24,6 +26,7 @@ test/         自动化测试
 npm install        # 当前模块为纯 JS，无需外部依赖即可测试
 npm test           # 运行自动化测试（Node 内置 test runner）
 npm run verify     # R3 可复现操作验证（逐项输出 PASS/FAIL）
+npm run verify-water # M4 水体核心可复现操作验证
 npm run demo       # 打开 http://localhost:4174 交互演示（需浏览器）
 ```
 
@@ -45,7 +48,26 @@ node --test test/player-controls.test.js   # 13 项断言
 node demo/verify.js                         # 9 项操作验证
 ```
 
+## M4 — 水体核心（完成标准 14）
+
+模块位置：`src/game/water/`，自动化测试 `test/water-core.test.js`。
+
+覆盖能力：
+- 氧气条：头部浸水时 air 递减（默认 15s），出水面/气穴回满；
+- 溺水：air 归零后按速率造成伤害（`takeDamage` 由 M3 血条接入）；
+- 水下能见度：随深度缩减的雾效可见距离（供 R1 渲染消费）；
+- 疾跑游泳：冲刺时水中速度更快；游泳姿势 hitbox 0.6，可潜入 1×1 水道（潜水入门，见下）；
+- 1×1 水道通过：潜水姿态可通过单格宽/单格高的水下通道；
+- 掉落物上浮：水中掉落物浮至水面并停稳；
+- 水下放置无错误空气洞：放置实心方块只替换该格，邻格水保留，`findErroneousAirHoles` 校验无错误空气洞。
+
+可复现证据：
+```bash
+node --test test/water-core.test.js   # 7 项断言
+node demo/verify-water.js              # 6 项操作验证
+```
+
 ## 说明
 
-- 本分支为 worker test7-4 的 R3 交付（Issue MUL-36）。R1/R2/R4+ 由其他成员在各自分支实现，由集成 Issue（MUL-43）统一合并、部署、CI 与 20 条标准证据报告。
+- 本分支（`agent/5a412bfb/issue-40`）为 worker test7-4 的 M4 交付（Issue MUL-40），基于 R3 交付（PR #1）之上。R1/R2 由其他成员在各自分支实现，由集成 Issue（MUL-43）统一合并、部署、CI 与 20 条标准证据报告。
 - 许可证：见 `LICENSE`（MIT）。素材与纹理遵循原创/授权兼容要求。

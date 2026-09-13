@@ -35,6 +35,7 @@ export class PlayerPhysics {
     this.half = opts.half ?? 0.3;
     this.standingHeight = opts.standingHeight ?? 1.8;
     this.sneakHeight = opts.sneakHeight ?? 1.5;
+    this.swimHeight = opts.swimHeight ?? 0.6; // horizontal swim posture (1×1 channel)
     this.waterAccel = opts.waterAccel ?? 12; // up thrust while swimming
     this.waterDrag = opts.waterDrag ?? 2.5;
     this.airControl = opts.airControl ?? 0.6; // 0..1 in-air horizontal gain
@@ -43,7 +44,9 @@ export class PlayerPhysics {
   // ----- geometry helpers -----
 
   height() {
-    return this.player.sneaking ? this.sneakHeight : this.standingHeight;
+    const p = this.player;
+    if (p.swimming) return this.swimHeight;
+    return p.sneaking ? this.sneakHeight : this.standingHeight;
   }
 
   collides(x, y, z, opt = {}) {
@@ -136,11 +139,14 @@ export class PlayerPhysics {
     // 2) Vertical velocity ------------------------------------------------
     let vy = p.vy;
     if (swimming) {
-      // buoyancy: damped; you float toward the surface, jump thrusts up.
+      // buoyancy: damped; you float toward the surface, jump thrusts up,
+      // sneak dives down (aligns with 1×1 water channels / caves).
       vy -= vy * this.waterDrag * dt;
-      const thrust = input.jump ? this.waterAccel : this.waterAccel * 0.25;
+      let thrust = this.waterAccel * 0.25;
+      if (input.jump) thrust = this.waterAccel;
+      else if (input.sneak) thrust = -this.waterAccel * 0.6;
       vy += thrust * dt;
-      vy = Math.max(vy, -this.maxSpeed * 0.4);
+      vy = Math.max(vy, -this.maxSpeed * 0.6);
       vy = Math.min(vy, this.maxSpeed * 0.8);
       p.onGround = false;
     } else {
@@ -158,7 +164,8 @@ export class PlayerPhysics {
 
     // 3) Horizontal movement with collision + step-up ---------------------
     let movedBlocked = false;
-    const airFactor = p.onGround ? 1 : this.airControl;
+    // full horizontal control while swimming (so 1×1 channels are navigable)
+    const airFactor = (p.onGround || swimming) ? 1 : this.airControl;
     let hx = mvX * airFactor * dt;
     let hz = mvZ * airFactor * dt;
     const blocked = this.moveWithCollision(hx, hz);
