@@ -1,0 +1,196 @@
+/* style.css — R1 (MUL-34) HUD + layout. Cascade order below canvas. */
+
+:root {
+  --hud-slot: 54px;
+  --hud-gap: 6px;
+  --hud-inactive: rgba(0, 0, 0, 0.42);
+  --hud-active: rgba(136, 214, 255, 0.85);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+#app canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* ---------------- HUD overlay ---------------- */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  color: #fff;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Crosshair */
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  opacity: 1;
+}
+.crosshair.dim { opacity: 0.4; }
+.crosshair .ch-b, .crosshair .ch-t, .crosshair .ch-l, .crosshair .ch-r {
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.7);
+}
+.crosshair .ch-b { left: 9px; top: 13px; width: 2px; height: 7px; }
+.crosshair .ch-t { left: 9px; top: 0; width: 2px; height: 7px; }
+.crosshair .ch-l { left: 0; top: 9px; width: 7px; height: 2px; }
+.crosshair .ch-r { left: 13px; top: 9px; width: 7px; height: 2px; }
+
+/* Stats (health / hunger / oxygen) lower-left */
+.stats {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-row {
+  display: flex;
+  gap: 1px;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.heart { color: #e33; }
+.heart-empty { color: rgba(80,20,20,0.7); }
+.heart-half { color: #e66; }
+.shank { color: #c97f2d; }
+.shank-empty { color: rgba(90,60,20,0.7); }
+.shank-half { color: #e0a04f; }
+
+.oxygen { margin-top: 4px; }
+.oxygen.hidden { display: none; }
+.oxy-bg { fill: rgba(0,0,0,0.45); }
+.oxy-fill { fill: #66ccff; }
+
+/* Hotbar bottom-center */
+.hotbar {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--hud-gap);
+}
+.slot {
+  width: var(--hud-slot);
+  height: var(--hud-slot);
+  background: var(--hud-inactive);
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.slot.selected {
+  border-color: var(--hud-active);
+  background: rgba(30, 60, 90, 0.6);
+}
+.slot-num {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+.slot-box {
+  width: 26px;
+  height: 26px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+.slot-name {
+  position: absolute;
+  bottom: 2px;
+  font-size: 9px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* Held item chip above hotbar */
+.held-chip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--hud-slot) + 24px);
+  transform: translateX(-50%);
+  background: var(--hud-inactive);
+  padding: 3px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+/* Click-to-play veil */
+.veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 22, 0.55);
+  text-align: center;
+}
+.veil.hidden { display: none; }
+.veil-title {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 24px rgba(90, 180, 255, 0.5);
+}
+.veil-sub { margin-top: 6px; font-size: 16px; opacity: 0.85; }
+.veil-cta {
+  margin-top: 22px;
+  display: inline-block;
+  padding: 10px 26px;
+  background: rgba(90, 180, 255, 0.2);
+  border: 1px solid rgba(150, 210, 255, 0.6);
+  border-radius: 6px;
+  font-size: 15px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Responsive: shrink hotbar on narrow windows without breaking layout */
+@media (max-width: 640px) {
+  :root {
+    --hud-slot: 44px;
+  }
+  .stats {
+    bottom: calc(var(--hud-slot) + 24px);
+  }
+  .veil-title { font-size: 28px; }
+}
