@@ -1,0 +1,16 @@
+{
+  "name": "test7-minecraft-web",
+  "version": "0.1.0",
+  "description": "Web Minecraft Bedrock 1.4.2 high-fidelity recreation (multi-agent ablation). Monorepo-style: each module owns its src/ under src/game/*.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "verify": "node demo/verify.js",
+    "verify-water": "node demo/verify-water.js",
+    "demo": "node demo/serve.js"
+  },
+  "keywords": ["minecraft", "voxel", "threejs", "web-game"],
+  "devDependencies": {}
+}
