@@ -30,7 +30,7 @@ export class FirstPersonCamera {
     this._onLockChange = this._onLockChange.bind(this);
     document.addEventListener('pointerlockchange', this._onLockChange);
     document.addEventListener('mousemove', this._onMouseMove);
-    document.addEventListener('mousedown', () => {
+    this.dom.addEventListener('mousedown', () => {
       if (!this.locked && document.pointerLockElement !== this.dom) {
         this.dom.requestPointerLock && this.dom.requestPointerLock();
       }
@@ -52,7 +52,7 @@ export class FirstPersonCamera {
   spawn() {
     this.camera.position.set(this.spawnX, this.spawnY, this.spawnZ);
     this.yaw = Math.PI * 0.25; // look toward interesting terrain
-    this.pitch = -0.12;
+    this.pitch = -0.35;
   }
 
   update(dt) {
@@ -61,4 +61,3 @@ export class FirstPersonCamera {
     this.camera.quaternion.setFromEuler(e);
   }
 }
-

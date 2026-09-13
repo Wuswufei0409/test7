@@ -1,0 +1,63 @@
+{
+  "mined": {
+    "target": [
+      3,
+      36,
+      3
+    ],
+    "itemId": "grass",
+    "broken": true,
+    "blockAfter": "air",
+    "dropCount": 1
+  },
+  "picked": {
+    "count": 1,
+    "drops": 0,
+    "hudCount": "1"
+  },
+  "restored": {
+    "source": "saved",
+    "count": 1,
+    "changedBlock": "air",
+    "seed": 20260913
+  },
+  "placementState": {
+    "position": [
+      6,
+      37,
+      6
+    ],
+    "block": "grass",
+    "count": 0
+  },
+  "inventoryUi": {
+    "slots": [
+      {
+        "itemId": "stone",
+        "count": 32
+      },
+      {
+        "itemId": "stone",
+        "count": 32
+      },
+      {
+        "itemId": "stone",
+        "count": 1
+      }
+    ],
+    "selected": 2,
+    "panelVisible": true
+  },
+  "death": {
+    "empty": true,
+    "droppedStacks": 3,
+    "status": "死亡掉落 3 组物品"
+  },
+  "corrupt": {
+    "ok": false,
+    "code": "CORRUPT_SAVE",
+    "visible": true,
+    "text": "存档损坏：Save is not valid JSON；已安全新建世界"
+  },
+  "browserErrors": []
+}

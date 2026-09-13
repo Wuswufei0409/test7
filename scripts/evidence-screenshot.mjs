@@ -108,6 +108,8 @@ const base = `http://127.0.0.1:${PORT}`;
         seed: v && v.seed,
         opaqueMeshes: v ? v.chunk.opaque.length : 0,
         transparentMeshes: v ? v.chunk.transparent.length : 0,
+        selectedBlock: v?.selectedBlock?.position ?? null,
+        highlightVisible: v?.highlight?.mesh?.visible === true,
         crosshairCenter: [cross.left + cross.width / 2, cross.top + cross.height / 2],
         hotbarRect: [hotbar.left, hotbar.top, hotbar.right, hotbar.bottom],
         statsRect: [health.left, health.top, health.right, health.bottom],
@@ -157,6 +159,7 @@ const base = `http://127.0.0.1:${PORT}`;
     });
 
     if (!stats.hasWebGL || stats.opaqueMeshes === 0) throw new Error('voxel scene did not initialize');
+    if (!stats.selectedBlock || !stats.highlightVisible) throw new Error('crosshair selection highlight is not visible');
     if (consoleErrors.length || pageErrors.length) {
       throw new Error(`blocking browser errors: ${[...consoleErrors, ...pageErrors].join(' | ')}`);
     }
