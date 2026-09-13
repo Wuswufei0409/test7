@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { CraftingSystem } from "../src/game/crafting/index.js";
 import { createTool, inspectMining, mineBlock, TOOL_TIERS } from "../src/game/tools/index.js";
 import { Furnace } from "../src/game/furnace/index.js";
+import { smeltFromInventory } from "../src/game/furnace/index.js";
+import { Inventory } from "../src/game/inventory/Inventory.js";
 
 const blank = (size) => Array.from({ length: size }, () => Array(size).fill(null));
 
@@ -108,4 +110,33 @@ test("complete wood-to-stone-to-iron progression is executable", () => {
   const ironPickaxeGrid = [["iron_ingot", "iron_ingot", "iron_ingot"], [null, "stick", null], [null, "stick", null]];
   assert.equal(crafting.craft(ironPickaxeGrid).item, "iron_pickaxe");
   assert.deepEqual(mineBlock("diamond_ore", createTool("iron", "pickaxe")).drops, ["diamond"]);
+});
+
+test("live inventory crafting consumes ingredients, respects grid size, and persists tool items", () => {
+  const crafting = new CraftingSystem();
+  const inventory = new Inventory();
+  inventory.add("oak_log", 3);
+  assert.equal(crafting.craftFromInventory(inventory, "oak_planks", 2).ok, true);
+  assert.equal(crafting.craftFromInventory(inventory, "crafting_table", 2).ok, true);
+  assert.equal(crafting.craftFromInventory(inventory, "wood_pickaxe", 2).reason, "recipe_requires_larger_grid");
+  inventory.add("oak_planks", 3);
+  inventory.add("stick", 2);
+  assert.equal(crafting.craftFromInventory(inventory, "wood_pickaxe", 3).ok, true);
+  assert.equal(inventory.count("wood_pickaxe"), 1);
+  assert.equal(Inventory.deserialize(inventory.serialize()).count("wood_pickaxe"), 1);
+});
+
+test("browser furnace adapter consumes input and fuel atomically", () => {
+  const inventory = new Inventory();
+  inventory.add("iron_ore", 1);
+  inventory.add("coal", 1);
+  assert.deepEqual(smeltFromInventory(inventory, "iron_ore"), {
+    ok: true,
+    input: "iron_ore",
+    fuel: "coal",
+    result: { item: "iron_ingot", count: 1 },
+  });
+  assert.equal(inventory.count("iron_ore"), 0);
+  assert.equal(inventory.count("coal"), 0);
+  assert.equal(inventory.count("iron_ingot"), 1);
 });

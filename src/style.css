@@ -205,6 +205,66 @@ body {
 .inventory-slot.hotbar-slot { background: #727272; }
 .inventory-slot.selected { outline: 2px solid #f3f38a; }
 
+.crafting-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(720px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 24px));
+  transform: translate(-50%, -50%);
+  z-index: 40;
+  padding: 14px;
+  overflow: hidden;
+  border: 3px solid #252525;
+  background: #c6c6c6;
+  box-shadow: inset 2px 2px #fff, inset -2px -2px #555, 0 8px 35px #000a;
+  color: #222;
+  text-shadow: none;
+}
+.crafting-panel.hidden { display: none; }
+.crafting-panel header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.crafting-panel header span { font-size: 12px; }
+.crafting-panel nav { display: flex; gap: 6px; margin-bottom: 12px; }
+.crafting-panel button {
+  border: 2px solid #777;
+  border-top-color: #eee;
+  border-left-color: #eee;
+  background: #999;
+  color: #171717;
+  cursor: pointer;
+}
+.crafting-panel button.active { background: #7ea066; color: #fff; }
+.crafting-panel button:disabled { opacity: .42; cursor: not-allowed; }
+.crafting-content { display: grid; grid-template-columns: 230px 1fr; gap: 14px; }
+.crafting-grid {
+  --craft-grid: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--craft-grid), 58px);
+  gap: 6px;
+  align-content: start;
+  min-height: 190px;
+  padding: 12px;
+  background: #aaa;
+}
+.crafting-grid div {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #666;
+  background: #858585;
+  color: #fff;
+  font-size: 10px;
+  text-align: center;
+}
+.crafting-output { margin-top: 8px; padding: 8px; min-height: 20px; background: #e2e2e2; font-size: 12px; }
+.recipe-book { min-width: 0; }
+.recipe-heading { margin-bottom: 6px; font-weight: 700; }
+.recipe-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 470px; overflow-y: auto; }
+.recipe-list button { min-height: 54px; padding: 7px; text-align: left; }
+.recipe-list b, .recipe-list span { display: block; overflow-wrap: anywhere; }
+.recipe-list span { margin-top: 3px; font-size: 10px; opacity: .85; }
+
 /* Click-to-play veil */
 .veil {
   position: absolute;
@@ -249,4 +309,8 @@ body {
   }
   .veil-title { font-size: 28px; }
   .action-status { max-width: 90vw; white-space: nowrap; overflow: hidden; }
+  .crafting-content { grid-template-columns: 155px 1fr; }
+  .crafting-grid { grid-template-columns: repeat(var(--craft-grid), 40px); padding: 8px; }
+  .crafting-grid div { width: 36px; height: 36px; }
+  .recipe-list { grid-template-columns: 1fr; max-height: 390px; }
 }

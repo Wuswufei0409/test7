@@ -1,7 +1,7 @@
 import { getBlockDefinition } from '../blocks/catalog.js';
 
 function cloneStack(stack) {
-  return stack ? { itemId: stack.itemId, count: stack.count } : null;
+  return stack ? structuredClone(stack) : null;
 }
 
 function validateStack(stack) {
@@ -97,6 +97,17 @@ export class Inventory {
     return this.slots.reduce((sum, stack) => sum + (stack?.itemId === itemId ? stack.count : 0), 0);
   }
 
+  removeItem(itemId, count = 1) {
+    if (!Number.isInteger(count) || count < 0 || this.count(itemId) < count) return false;
+    let remaining = count;
+    for (let i = 0; i < this.slots.length && remaining; i++) {
+      if (this.slots[i]?.itemId !== itemId) continue;
+      const removed = this.remove(i, remaining);
+      remaining -= removed?.count ?? 0;
+    }
+    return remaining === 0;
+  }
+
   serialize() {
     return { size: this.size, hotbarSize: this.hotbarSize, selected: this.selected, slots: this.slots.map(cloneStack) };
   }
@@ -114,4 +125,3 @@ export class Inventory {
     return inventory;
   }
 }
-

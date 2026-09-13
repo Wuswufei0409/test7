@@ -10,6 +10,7 @@
     "test": "node --test test/*.test.js",
     "evidence": "npm run build && node scripts/evidence-screenshot.mjs",
     "evidence-gameplay": "npm run build && node scripts/gameplay-e2e.mjs",
+    "evidence-m2": "npm run build && node scripts/m2-e2e.mjs",
     "verify-gameplay": "node demo/verify-gameplay.js"
   },
   "license": "MIT",

@@ -85,7 +85,7 @@ export class HUD {
     // ---- live interaction feedback + inventory ----
     this.actionStatus = document.createElement('div');
     this.actionStatus.className = 'action-status';
-    this.actionStatus.textContent = '左键采集 · 右键放置 · F 拾取 · E 背包 · K 测试死亡掉落';
+    this.actionStatus.textContent = '左键采集 · 右键放置 · F 拾取 · E 背包 · C 合成/熔炉';
     this.el.appendChild(this.actionStatus);
 
     this.saveStatus = document.createElement('div');

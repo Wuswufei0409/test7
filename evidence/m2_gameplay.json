@@ -1,0 +1,29 @@
+{
+  "beforeReload": {
+    "craftingTable": 1,
+    "wood": 1,
+    "stone": 1,
+    "iron": 1,
+    "ingots": 0,
+    "furnace": {
+      "ok": false,
+      "reason": "missing_input_or_fuel"
+    },
+    "savedFurnace": {
+      "default": {
+        "completed": 3,
+        "lastRecipe": "iron_ore"
+      }
+    }
+  },
+  "restored": {
+    "wood": 1,
+    "stone": 1,
+    "iron": 1,
+    "furnace": {
+      "completed": 3,
+      "lastRecipe": "iron_ore"
+    }
+  },
+  "browserErrors": []
+}

@@ -18,11 +18,24 @@ export const BLOCKS = Object.freeze(Object.fromEntries(definitions.map(([id, har
   Object.freeze({ id, itemId: id, drop: id, hardness, maxStack: 64, placeable: true, solid: true }),
 ])));
 
+const itemDefinitions = [
+  ['stick', 64], ['coal', 64], ['iron_ingot', 64], ['diamond', 64],
+  ['wheat', 64], ['bread', 64], ['raw_cod', 64], ['cooked_cod', 64],
+  ['prismarine_shard', 64], ['prismarine_crystals', 64], ['oak_boat', 1], ['bucket', 16],
+  ...['wood', 'stone', 'iron'].flatMap((tier) =>
+    ['pickaxe', 'axe', 'shovel', 'sword'].map((kind) => [`${tier}_${kind}`, 1])),
+];
+
+export const ITEMS = Object.freeze(Object.fromEntries(itemDefinitions.map(([id, maxStack]) => [
+  id,
+  Object.freeze({ id, itemId: id, maxStack, placeable: false, solid: false }),
+])));
+
 export const BLOCK_IDS = Object.freeze(Object.keys(BLOCKS));
 
 export function getBlockDefinition(id) {
   if (id === AIR) return { id: AIR, hardness: 0, placeable: false, solid: false, replaceable: true };
-  return BLOCKS[id] ?? null;
+  return BLOCKS[id] ?? ITEMS[id] ?? null;
 }
 
 export function requireBlockDefinition(id) {
@@ -30,4 +43,3 @@ export function requireBlockDefinition(id) {
   if (!definition) throw new Error(`Unknown block: ${id}`);
   return definition;
 }
-

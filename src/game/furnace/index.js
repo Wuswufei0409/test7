@@ -1,1 +1,1 @@
-export { Furnace, FUELS, SMELTING_RECIPES } from "./Furnace.js";
+export { Furnace, FUELS, SMELTING_RECIPES, smeltFromInventory } from "./Furnace.js";

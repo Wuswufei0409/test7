@@ -53,6 +53,39 @@ export class CraftingSystem {
     return recipe ? { ...recipe.result, recipeId: recipe.id } : null;
   }
 
+  recipeById(id) {
+    return this.recipes.find((recipe) => recipe.id === id) ?? null;
+  }
+
+  ingredientsFor(recipeOrId) {
+    const recipe = typeof recipeOrId === 'string' ? this.recipeById(recipeOrId) : recipeOrId;
+    if (!recipe) throw new RangeError(`Unknown recipe: ${recipeOrId}`);
+    const values = recipe.type === 'shaped' ? recipe.pattern.flat().filter(Boolean) : recipe.ingredients;
+    return Object.entries(values.reduce((counts, itemId) => {
+      counts[itemId] = (counts[itemId] ?? 0) + 1;
+      return counts;
+    }, {})).map(([itemId, count]) => ({ itemId, count }));
+  }
+
+  craftFromInventory(inventory, recipeId, gridSize = 3) {
+    const recipe = this.recipeBook({ gridSize }).find((entry) => entry.id === recipeId);
+    if (!recipe) return { ok: false, reason: 'recipe_requires_larger_grid' };
+    const ingredients = this.ingredientsFor(recipe);
+    if (ingredients.some(({ itemId, count }) => inventory.count(itemId) < count)) {
+      return { ok: false, reason: 'missing_ingredients', ingredients };
+    }
+    const snapshot = inventory.serialize();
+    ingredients.forEach(({ itemId, count }) => inventory.removeItem(itemId, count));
+    const outputRemainder = inventory.add(recipe.result.item, recipe.result.count);
+    if (outputRemainder) {
+      const restored = inventory.constructor.deserialize(snapshot);
+      inventory.slots = restored.slots;
+      inventory.selected = restored.selected;
+      return { ok: false, reason: 'inventory_full' };
+    }
+    return { ok: true, recipeId, result: { ...recipe.result }, ingredients };
+  }
+
   recipeBook({ gridSize = 3, category = null, unlocked = null } = {}) {
     if (![2, 3].includes(gridSize)) throw new RangeError("Recipe book gridSize must be 2 or 3");
     const unlockedSet = unlocked ? new Set(unlocked) : null;

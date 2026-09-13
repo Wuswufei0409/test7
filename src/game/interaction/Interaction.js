@@ -48,7 +48,7 @@ export class MiningController {
     this.progress = 0;
   }
 
-  update(world, position, seconds, drops, { toolSpeed = 1 } = {}) {
+  update(world, position, seconds, drops, { toolSpeed = 1, canHarvest = true, dropItem = null } = {}) {
     const targetKey = position.join(',');
     if (targetKey !== this.targetKey) {
       this.targetKey = targetKey;
@@ -61,7 +61,7 @@ export class MiningController {
     const ratio = Math.min(1, this.progress / block.hardness);
     if (ratio < 1) return { broken: false, progress: ratio };
     world.setBlock(...position, AIR);
-    const drop = drops.spawn(block.drop, 1, position.map((value) => value + 0.5));
+    const drop = canHarvest ? drops.spawn(dropItem ?? block.drop, 1, position.map((value) => value + 0.5)) : null;
     this.reset();
     return { broken: true, progress: 1, drop };
   }
@@ -80,4 +80,3 @@ export function placeSelectedBlock(inventory, world, position, playerBounds = nu
   inventory.remove(inventory.selected, 1);
   return true;
 }
-

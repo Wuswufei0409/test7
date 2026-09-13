@@ -70,3 +70,21 @@ export class Furnace {
     return structuredClone({ input: this.input, fuel: this.fuel, output: this.output, burnRemaining: this.burnRemaining, progress: this.progress });
   }
 }
+
+export function smeltFromInventory(inventory, inputItem, fuelItem = "coal") {
+  const recipe = SMELTING_RECIPES[inputItem];
+  if (!recipe) return { ok: false, reason: "not_smeltable" };
+  if (inventory.count(inputItem) < 1 || inventory.count(fuelItem) < 1) {
+    return { ok: false, reason: "missing_input_or_fuel" };
+  }
+  const snapshot = inventory.serialize();
+  inventory.removeItem(inputItem, 1);
+  inventory.removeItem(fuelItem, 1);
+  if (inventory.add(recipe.output, recipe.count)) {
+    const restored = inventory.constructor.deserialize(snapshot);
+    inventory.slots = restored.slots;
+    inventory.selected = restored.selected;
+    return { ok: false, reason: "inventory_full" };
+  }
+  return { ok: true, input: inputItem, fuel: fuelItem, result: { item: recipe.output, count: recipe.count } };
+}

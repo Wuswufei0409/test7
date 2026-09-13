@@ -24,6 +24,10 @@ import { Inventory } from './game/inventory/Inventory.js';
 import { MutableWorld } from './game/world/MutableWorld.js';
 import { DropManager, MiningController, placeSelectedBlock } from './game/interaction/Interaction.js';
 import { createGameState, loadFromStorage, saveToStorage } from './game/save/SaveGame.js';
+import { CraftingSystem } from './game/crafting/index.js';
+import { smeltFromInventory } from './game/furnace/index.js';
+import { createTool, inspectMining, TOOL_TIERS } from './game/tools/index.js';
+import { CraftingPanel } from './ui/CraftingPanel.js';
 import { Block } from './world/Blocks.js';
 import './style.css';
 
@@ -82,6 +86,7 @@ export function start(opts = {}) {
   const world = new MutableWorld({ blockAt: (x, y, z) => renderToItem.get(baseWorld.blockAt(x, y, z)) ?? 'stone' });
   world.applyChanges(restored.changedBlocks);
   const inventory = Inventory.deserialize(restored.inventory);
+  const crafting = new CraftingSystem();
   const drops = new DropManager();
   drops.entities = restored.entities.map((entity) => structuredClone(entity));
   drops.nextId = Math.max(0, ...drops.entities.map((entity) => entity.id ?? 0)) + 1;
@@ -184,6 +189,25 @@ export function start(opts = {}) {
     saveToStorage(localStorage, makeState());
     hud.setSaveStatus('世界已保存');
   };
+  const craftRecipe = (recipeId, gridSize = 3) => {
+    const result = crafting.craftFromInventory(inventory, recipeId, gridSize);
+    hud.updateInventory(inventory);
+    hud.setActionStatus(result.ok ? `合成 ${result.result.item} ×${result.result.count}` : `无法合成：${result.reason}`);
+    if (result.ok) persist();
+    return result;
+  };
+  const smeltItem = (inputItem, fuelItem = 'coal') => {
+    const result = smeltFromInventory(inventory, inputItem, fuelItem);
+    hud.updateInventory(inventory);
+    hud.setActionStatus(result.ok ? `熔炼 ${inputItem} → ${result.result.item}` : `无法熔炼：${result.reason}`);
+    if (result.ok) {
+      const furnaceState = containers.furnaces.default ?? { completed: 0 };
+      containers.furnaces.default = { completed: furnaceState.completed + 1, lastRecipe: inputItem };
+      persist();
+    }
+    return result;
+  };
+  const craftingPanel = new CraftingPanel({ crafting, inventory, onCraft: craftRecipe, onSmelt: smeltItem });
   const syncDropMeshes = () => {
     const live = new Set(drops.entities.map((entity) => entity.id));
     for (const [id, mesh] of dropMeshes) {
@@ -219,7 +243,21 @@ export function start(opts = {}) {
 
   const mineSelected = (seconds = 0.12) => {
     if (!selectedBlock) return { broken: false, progress: 0 };
-    const result = mining.update(world, selectedBlock.position, seconds, drops);
+    const held = inventory.current;
+    const toolMatch = held?.itemId?.match(/^(wood|stone|iron)_(pickaxe|axe|shovel|sword)$/);
+    const tool = toolMatch ? { ...createTool(toolMatch[1], toolMatch[2]), durability: held.durability ?? TOOL_TIERS[toolMatch[1]].durability } : null;
+    let miningRule = { canHarvest: true, drops: [selectedBlock.blockId], speed: 1 };
+    try { miningRule = inspectMining(selectedBlock.blockId, tool); } catch { /* ordinary blocks use catalogue defaults */ }
+    const result = mining.update(world, selectedBlock.position, seconds, drops, {
+      toolSpeed: miningRule.speed,
+      canHarvest: miningRule.canHarvest,
+      dropItem: miningRule.drops[0] ?? null,
+    });
+    if (result.broken && held && tool) {
+      held.durability = tool.durability - 1;
+      if (held.durability <= 0) inventory.remove(inventory.selected, 1);
+      hud.updateInventory(inventory);
+    }
     hud.setActionStatus(result.broken ? `已采集 ${selectedBlock.blockId}，按 F 拾取` : `采集中 ${Math.round(result.progress * 100)}%`);
     if (result.broken) {
       buildRegion();
@@ -276,6 +314,7 @@ export function start(opts = {}) {
   renderer.domElement.addEventListener('contextmenu', (event) => event.preventDefault());
 
   let inventoryOpen = false;
+  let craftingOpen = false;
   let swapSource = null;
   document.addEventListener('keydown', (event) => {
     if (/^Digit[1-9]$/.test(event.code)) {
@@ -284,9 +323,19 @@ export function start(opts = {}) {
       persist();
     } else if (event.code === 'KeyF') collectDrops();
     else if (event.code === 'KeyK') die();
+    else if (event.code === 'KeyC') {
+      craftingOpen = !craftingOpen;
+      if (craftingOpen && document.pointerLockElement) document.exitPointerLock();
+      inventoryOpen = false;
+      hud.setInventoryOpen(false);
+      craftingPanel.setOpen(craftingOpen);
+      hud.setLocked(!!document.pointerLockElement);
+    }
     else if (event.code === 'KeyE') {
       inventoryOpen = !inventoryOpen;
       if (inventoryOpen && document.pointerLockElement) document.exitPointerLock();
+      craftingOpen = false;
+      craftingPanel.setOpen(false);
       hud.setInventoryOpen(inventoryOpen);
     }
   });
@@ -344,13 +393,15 @@ export function start(opts = {}) {
     hand,
     highlight,
     inventory,
+    crafting,
+    craftingPanel,
     drops,
     dropGroup,
     mining,
     loadResult,
     get gameTime() { return gameTime; },
     autosaveId,
-    actions: { mineSelected, collectDrops, placeCurrent, die, persist, refreshSelection },
+    actions: { mineSelected, collectDrops, placeCurrent, die, persist, refreshSelection, craftRecipe, smeltItem },
     get selectedBlock() { return selectedBlock; },
     get lastPlacedPosition() { return lastPlacedPosition; },
     resize,
