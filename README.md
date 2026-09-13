@@ -71,3 +71,32 @@ node demo/verify-water.js              # 6 项操作验证
 
 - 本分支（`agent/5a412bfb/issue-40`）为 worker test7-4 的 M4 交付（Issue MUL-40），基于 R3 交付（PR #1）之上。R1/R2 由其他成员在各自分支实现，由集成 Issue（MUL-43）统一合并、部署、CI 与 20 条标准证据报告。
 - 许可证：见 `LICENSE`（MIT）。素材与纹理遵循原创/授权兼容要求。
+
+## M5 — 海洋世界与水生生物（完成标准 15+16）
+
+模块位置：`src/game/ocean/`，自动化测试 `test/ocean.test.js`（14 项断言），
+可复现操作验证 `demo/verify-ocean.js`（5 项 PASS）。
+
+覆盖能力：
+- 海洋生成（`OceanFeatures.js`）：
+  - 珊瑚礁（`addCoralReef`）、海带/海草（`addKelpForest` / `addSeagrassField`）、
+    冰山（`addIceberg`）、沉船（`addShipwreck`）、水下遗迹（`addUnderwaterRuins`）、
+    埋藏宝藏（`addBuriedTreasure`）；同 seed 确定性生成（`buildOcean`）。
+- 藏宝图 / 线索（`Treasure.js`）：`createTreasureMap` 依据方位角+距离生成多步线索，
+  `followClue`/`furthestClueReached` 引导玩家，`digTreasure` 挖开覆盖沙暴露宝箱并
+  一次性发放奖励（心之海洋之心等），二次挖掘无效。
+- 水生生物（`AquaticLife.js`）：海豚（`Dolphin`，基础游动 + 接近玩家时友好跟随）、
+  鳕鱼/鲑鱼/热带鱼/河豚（`Fish`，在水中游动且不进入实体）；河豚在玩家接近时鼓气
+  （`puffed` + 膨胀动画量），接触时按秒造成伤害（接入 `takeDamage`）。
+- 桶捕放（`FishBucket.js`）：`catchFishIntoBucket` 捕获四种鱼入桶、`releaseFishFromBucket`
+  释放回水中（仅限水域格子）；海豚为哺乳动物不可入桶。
+
+可复现证据：
+```bash
+node --test test/ocean.test.js   # 14 项断言
+node demo/verify-ocean.js        # 5 项操作验证
+npm test                         # 全量 34 项（R3 13 + M4 7 + M5 14）
+```
+
+依赖：基于 R2 世界生成与 M4 水体核心之上，`buildOcean` 复用 `VoxelWorld` 稀疏区块契约；
+水生生物游动/河豚伤害通过各子模块纯函数消费，未耦合浏览器渲染。

@@ -9,6 +9,8 @@
     "test": "node --test test/*.test.js",
     "verify": "node demo/verify.js",
     "verify-water": "node demo/verify-water.js",
+    "verify-ocean": "node demo/verify-ocean.js",
+    "verify-water": "node demo/verify-water.js",
     "demo": "node demo/serve.js"
   },
   "keywords": ["minecraft", "voxel", "threejs", "web-game"],
