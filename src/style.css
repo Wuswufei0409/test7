@@ -129,6 +129,10 @@ body {
   height: 26px;
   background: rgba(255,255,255,0.12);
   border-radius: 3px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
 }
 .slot-name {
   position: absolute;
@@ -151,6 +155,56 @@ body {
   letter-spacing: 0.3px;
 }
 
+.action-status, .save-status {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: rgba(0,0,0,.55);
+  font-size: 12px;
+}
+.action-status { top: 12px; }
+.save-status { top: 42px; color: #9fe7a4; }
+.save-status.error { color: #ffb0a8; border: 1px solid rgba(255,90,70,.65); }
+.save-status.hidden { display: none; }
+
+.inventory-panel {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(510px, calc(100vw - 24px));
+  transform: translate(-50%, -50%);
+  padding: 14px;
+  border: 3px solid #252525;
+  background: #c6c6c6;
+  box-shadow: inset 2px 2px #fff, inset -2px -2px #555, 0 8px 35px #000a;
+  color: #222;
+  text-shadow: none;
+  z-index: 3;
+}
+.inventory-panel.hidden { display: none; }
+.inventory-title { margin-bottom: 10px; font-weight: 700; }
+.inventory-title span { float: right; font-size: 11px; font-weight: 400; }
+.inventory-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.inventory-slot {
+  aspect-ratio: 1;
+  min-width: 0;
+  white-space: pre-line;
+  overflow: hidden;
+  padding: 2px;
+  border: 2px solid #777;
+  border-top-color: #333;
+  border-left-color: #333;
+  background: #8b8b8b;
+  color: #fff;
+  font-size: 9px;
+  line-height: 1.15;
+}
+.inventory-slot.hotbar-slot { background: #727272; }
+.inventory-slot.selected { outline: 2px solid #f3f38a; }
+
 /* Click-to-play veil */
 .veil {
   position: absolute;
@@ -160,6 +214,7 @@ body {
   justify-content: center;
   background: rgba(10, 14, 22, 0.55);
   text-align: center;
+  z-index: 2;
 }
 .veil.hidden { display: none; }
 .veil-title {
@@ -193,4 +248,5 @@ body {
     bottom: calc(var(--hud-slot) + 24px);
   }
   .veil-title { font-size: 28px; }
+  .action-status { max-width: 90vw; white-space: nowrap; overflow: hidden; }
 }

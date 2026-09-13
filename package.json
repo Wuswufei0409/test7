@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "node --test test/*.test.js",
     "evidence": "npm run build && node scripts/evidence-screenshot.mjs",
+    "evidence-gameplay": "npm run build && node scripts/gameplay-e2e.mjs",
     "verify-gameplay": "node demo/verify-gameplay.js"
   },
   "license": "MIT",

@@ -30,7 +30,7 @@ export class FirstPersonCamera {
     this._onLockChange = this._onLockChange.bind(this);
     document.addEventListener('pointerlockchange', this._onLockChange);
     document.addEventListener('mousemove', this._onMouseMove);
-    document.addEventListener('mousedown', () => {
+    this.dom.addEventListener('mousedown', () => {
       if (!this.locked && document.pointerLockElement !== this.dom) {
         this.dom.requestPointerLock && this.dom.requestPointerLock();
       }

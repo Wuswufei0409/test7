@@ -23,6 +23,7 @@ export class HUD {
     this.el.id = 'hud';
     this.el.className = 'hud';
     this.locked = false;
+    this.inventoryOpen = false;
     document.body.appendChild(this.el);
 
     this.health = HEARTS;
@@ -81,6 +82,30 @@ export class HUD {
     this.heldChip.textContent = this.slotNames[0];
     this.el.appendChild(this.heldChip);
 
+    // ---- live interaction feedback + inventory ----
+    this.actionStatus = document.createElement('div');
+    this.actionStatus.className = 'action-status';
+    this.actionStatus.textContent = '左键采集 · 右键放置 · F 拾取 · E 背包 · K 测试死亡掉落';
+    this.el.appendChild(this.actionStatus);
+
+    this.saveStatus = document.createElement('div');
+    this.saveStatus.className = 'save-status hidden';
+    this.el.appendChild(this.saveStatus);
+
+    this.inventoryPanel = document.createElement('div');
+    this.inventoryPanel.className = 'inventory-panel hidden';
+    this.inventoryPanel.innerHTML = '<div class="inventory-title">背包 <span>左键交换 · 右键拆分</span></div><div class="inventory-grid"></div>';
+    this.inventoryGrid = this.inventoryPanel.querySelector('.inventory-grid');
+    this.inventorySlots = [];
+    for (let i = 0; i < 36; i++) {
+      const slot = document.createElement('button');
+      slot.className = `inventory-slot${i < 9 ? ' hotbar-slot' : ''}`;
+      slot.dataset.index = String(i);
+      this.inventoryGrid.appendChild(slot);
+      this.inventorySlots.push(slot);
+    }
+    this.el.appendChild(this.inventoryPanel);
+
     // ---- "click to play" veil ----
     this.veil = document.createElement('div');
     this.veil.className = 'veil';
@@ -90,7 +115,7 @@ export class HUD {
 
   setLocked(locked) {
     this.locked = locked;
-    this.veil.classList.toggle('hidden', !!locked);
+    this.veil.classList.toggle('hidden', !!locked || this.inventoryOpen);
     this.cross.classList.toggle('dim', !locked);
   }
 
@@ -128,5 +153,37 @@ export class HUD {
     this.slots.forEach((s, idx) => s.classList.toggle('selected', idx === i));
     this.heldChip.textContent = this.slotNames[i];
   }
-}
 
+  updateInventory(inventory) {
+    this.selectSlot(inventory.selected);
+    inventory.slots.forEach((stack, i) => {
+      const name = stack?.itemId?.replaceAll('_', ' ') ?? '';
+      if (i < 9) {
+        this.slots[i].querySelector('.slot-name').textContent = name || 'Empty';
+        this.slots[i].querySelector('.slot-box').textContent = stack ? String(stack.count) : '';
+      }
+      const panelSlot = this.inventorySlots[i];
+      panelSlot.textContent = stack ? `${name}\n${stack.count}` : '';
+      panelSlot.classList.toggle('selected', i === inventory.selected);
+    });
+    const current = inventory.current;
+    this.heldChip.textContent = current ? `${current.itemId.replaceAll('_', ' ')} ×${current.count}` : 'Empty hand';
+  }
+
+  setInventoryOpen(open) {
+    this.inventoryOpen = open;
+    this.inventoryPanel.classList.toggle('hidden', !open);
+    this.inventoryPanel.style.pointerEvents = open ? 'auto' : 'none';
+    this.veil.classList.toggle('hidden', open || this.locked);
+  }
+
+  setActionStatus(text) {
+    this.actionStatus.textContent = text;
+  }
+
+  setSaveStatus(text, error = false) {
+    this.saveStatus.textContent = text;
+    this.saveStatus.classList.toggle('error', error);
+    this.saveStatus.classList.toggle('hidden', !text);
+  }
+}
