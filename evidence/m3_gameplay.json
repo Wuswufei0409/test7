@@ -1,0 +1,93 @@
+{
+  "survival": {
+    "sources": {
+      "fall": 5,
+      "drowning": 2,
+      "melee": 1,
+      "hostile": 3
+    },
+    "ate": true,
+    "health": 9,
+    "hunger": 15,
+    "bread": 2,
+    "difficulty": "normal"
+  },
+  "deathRespawn": {
+    "droppedStacks": 6,
+    "dead": true,
+    "respawned": true,
+    "position": [
+      9.5,
+      39.62,
+      9.5
+    ],
+    "bed": [
+      9.5,
+      39.62,
+      9.5
+    ],
+    "health": 20
+  },
+  "night": {
+    "difficulty": "hard",
+    "time": 13500,
+    "night": true,
+    "brightness": 0.12,
+    "hostiles": [
+      {
+        "id": 1,
+        "type": "zombie",
+        "health": 30,
+        "damage": 4.5,
+        "burning": false
+      }
+    ],
+    "visibleMobs": 1
+  },
+  "slept": {
+    "ok": true,
+    "time": 0,
+    "night": false,
+    "spawnPoint": [
+      9.5,
+      39.62,
+      9.5
+    ],
+    "burning": true
+  },
+  "farm": {
+    "position": [
+      5,
+      37,
+      6
+    ],
+    "tilled": true,
+    "planted": {
+      "planted": true
+    },
+    "mature": {
+      "position": [
+        5,
+        37,
+        6
+      ],
+      "hydrated": true,
+      "crop": "wheat",
+      "stage": 7,
+      "progress": 0
+    },
+    "visibleCrops": 1
+  },
+  "harvest": {
+    "result": {
+      "produce": "wheat",
+      "produceCount": 3,
+      "seed": "wheat_seeds",
+      "seedCount": 2
+    },
+    "wheat": 3,
+    "seeds": 2,
+    "crops": 0
+  },
+  "browserErrors": []
+}

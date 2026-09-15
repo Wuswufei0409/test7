@@ -77,7 +77,7 @@ export function loadFromStorage(storage, createFallback, key = SAVE_KEY) {
   }
 }
 
-export function createGameState({ seed, player, inventory, time = 0, world, containers = {}, entities = [] }) {
+export function createGameState({ seed, player, inventory, time = 0, world, containers = {}, entities = [], survival = null, dayNight = null, farming = null }) {
   return {
     version: SAVE_VERSION,
     seed: seed >>> 0,
@@ -87,6 +87,8 @@ export function createGameState({ seed, player, inventory, time = 0, world, cont
     changedBlocks: world.serializeChanges(),
     containers: structuredClone(containers),
     entities: structuredClone(entities),
+    ...(survival ? { survival: structuredClone(survival) } : {}),
+    ...(dayNight ? { dayNight: structuredClone(dayNight) } : {}),
+    ...(farming ? { farming: structuredClone(farming) } : {}),
   };
 }
-

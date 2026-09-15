@@ -15,6 +15,10 @@ export class Sky {
     // Background color used by renderer clear + fog fallback.
     this.topColor = new THREE.Color(0x79b8ff); // sky blue zenith
     this.horizonColor = new THREE.Color(0xe9f4ff); // pale horizon
+    this.dayTopColor = this.topColor.clone();
+    this.dayHorizonColor = this.horizonColor.clone();
+    this.nightTopColor = new THREE.Color(0x071426);
+    this.nightHorizonColor = new THREE.Color(0x18243b);
 
     // Vertical gradient dome.
     const geo = new THREE.SphereGeometry(renderDist * 0.92, 24, 16);
@@ -59,6 +63,18 @@ export class Sky {
 
     // Fog for depth fade into the haze.
     scene.fog = new THREE.Fog(this.horizonColor, renderDist * 0.5, renderDist);
+    this.ambient = new THREE.HemisphereLight(0xddeeff, 0x384020, 1.2);
+    scene.add(this.ambient);
+  }
+
+  setBrightness(value) {
+    const light = Math.max(0.12, Math.min(1, value));
+    this.ambient.intensity = 0.25 + light;
+    this.topColor.copy(this.nightTopColor).lerp(this.dayTopColor, light);
+    this.horizonColor.copy(this.nightHorizonColor).lerp(this.dayHorizonColor, light);
+    this.scene.background = this.horizonColor;
+    this.scene.fog.color.copy(this.horizonColor);
+    this.sun.visible = light > 0.35;
   }
 
   update(camera) {
@@ -66,4 +82,3 @@ export class Sky {
     this.sun.position.set(camera.position.x + 120, camera.position.y + 160, camera.position.z - 90);
   }
 }
-
