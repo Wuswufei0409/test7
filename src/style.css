@@ -169,6 +169,20 @@ body {
 .save-status.error { color: #ffb0a8; border: 1px solid rgba(255,90,70,.65); }
 .save-status.hidden { display: none; }
 
+.survival-panel {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  min-width: 210px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 11px;
+  border-left: 3px solid #85b65a;
+  background: rgba(0, 0, 0, .58);
+  font-size: 11px;
+}
+.survival-panel strong { color: #b9ed88; font-size: 13px; }
+
 .inventory-panel {
   pointer-events: auto;
   position: absolute;
@@ -249,4 +263,5 @@ body {
   }
   .veil-title { font-size: 28px; }
   .action-status { max-width: 90vw; white-space: nowrap; overflow: hidden; }
+  .survival-panel { right: 8px; top: 48px; min-width: 180px; }
 }

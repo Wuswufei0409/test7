@@ -85,12 +85,17 @@ export class HUD {
     // ---- live interaction feedback + inventory ----
     this.actionStatus = document.createElement('div');
     this.actionStatus.className = 'action-status';
-    this.actionStatus.textContent = '左键采集 · 右键放置 · F 拾取 · E 背包 · K 测试死亡掉落';
+    this.actionStatus.textContent = 'D 难度 · H 吃 · J 受伤 · P 重生 · N 跳时 · B 睡床 · T 耕地 · G 种/收 · R 生长';
     this.el.appendChild(this.actionStatus);
 
     this.saveStatus = document.createElement('div');
     this.saveStatus.className = 'save-status hidden';
     this.el.appendChild(this.saveStatus);
+
+    this.survivalPanel = document.createElement('div');
+    this.survivalPanel.className = 'survival-panel';
+    this.survivalPanel.innerHTML = '<strong>生存</strong><span data-survival></span><span data-world></span><span data-farm></span>';
+    this.el.appendChild(this.survivalPanel);
 
     this.inventoryPanel = document.createElement('div');
     this.inventoryPanel.className = 'inventory-panel hidden';
@@ -179,6 +184,15 @@ export class HUD {
 
   setActionStatus(text) {
     this.actionStatus.textContent = text;
+  }
+
+  updateSurvival(survival, dayNight, farming) {
+    this.setHealth(Math.ceil(survival.health));
+    this.setHunger(Math.ceil(survival.hunger));
+    this.survivalPanel.querySelector('[data-survival]').textContent = `${survival.difficulty} · ${survival.dead ? '已死亡（P 重生）' : `生命 ${survival.health.toFixed(1)} / 饥饿 ${survival.hunger.toFixed(1)}`}`;
+    this.survivalPanel.querySelector('[data-world]').textContent = `第 ${dayNight.day} 天 · ${dayNight.isNight ? '夜晚' : '白天'} ${Math.floor(dayNight.time)} · 敌怪 ${dayNight.hostiles.length}`;
+    const crops = [...farming.plots.values()];
+    this.survivalPanel.querySelector('[data-farm]').textContent = `耕地 ${crops.length} · 作物 ${crops.filter((plot) => plot.crop).length}`;
   }
 
   setSaveStatus(text, error = false) {

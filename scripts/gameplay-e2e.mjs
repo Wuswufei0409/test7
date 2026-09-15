@@ -133,7 +133,7 @@ try {
     droppedStacks: window.__voxel.drops.entities.length,
     status: document.querySelector('.action-status').textContent,
   }));
-  assert(death.empty && death.droppedStacks === 3 && death.status.includes('死亡掉落'), `browser death drops failed: ${JSON.stringify(death)}`);
+  assert(death.empty && death.droppedStacks >= 3 && death.status.includes('死亡掉落'), `browser death drops failed: ${JSON.stringify(death)}`);
 
   await page.evaluate(() => localStorage.setItem('bedrock-web.world.v1', '{broken'));
   await page.reload({ waitUntil: 'load' });

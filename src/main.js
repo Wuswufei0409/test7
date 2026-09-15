@@ -25,6 +25,9 @@ import { MutableWorld } from './game/world/MutableWorld.js';
 import { DropManager, MiningController, placeSelectedBlock } from './game/interaction/Interaction.js';
 import { createGameState, loadFromStorage, saveToStorage } from './game/save/SaveGame.js';
 import { Block } from './world/Blocks.js';
+import { SurvivalSystem } from './game/survival/SurvivalSystem.js';
+import { DayNightSystem } from './game/survival/DayNightSystem.js';
+import { FarmingSystem } from './game/farming/FarmingSystem.js';
 import './style.css';
 
 const SEED = 20260913;
@@ -33,6 +36,12 @@ const CHUNK = 16;
 
 export function start(opts = {}) {
   const fallbackInventory = new Inventory();
+  fallbackInventory.slots[27] = { itemId: 'bread', count: 3 };
+  fallbackInventory.slots[28] = { itemId: 'wheat_seeds', count: 8 };
+  fallbackInventory.slots[29] = { itemId: 'carrot', count: 4 };
+  fallbackInventory.slots[30] = { itemId: 'potato', count: 4 };
+  fallbackInventory.slots[31] = { itemId: 'wooden_hoe', count: 1 };
+  fallbackInventory.slots[32] = { itemId: 'bed', count: 1 };
   const fallbackState = {
     version: 1,
     seed: opts.seed ?? SEED,
@@ -42,6 +51,9 @@ export function start(opts = {}) {
     changedBlocks: [],
     containers: { chests: {}, furnaces: {} },
     entities: [],
+    survival: { health: 20, hunger: 20, saturation: 5, difficulty: opts.difficulty ?? 'normal' },
+    dayNight: { time: 1000, day: 1, hostiles: [], nextMobId: 1 },
+    farming: { plots: [] },
   };
   const loadResult = loadFromStorage(localStorage, () => structuredClone(fallbackState));
   const restored = loadResult.state;
@@ -87,6 +99,13 @@ export function start(opts = {}) {
   drops.nextId = Math.max(0, ...drops.entities.map((entity) => entity.id ?? 0)) + 1;
   const mining = new MiningController();
   let gameTime = restored.time;
+  const survival = new SurvivalSystem(restored.survival ?? {
+    health: restored.player.health ?? 20,
+    hunger: restored.player.hunger ?? 20,
+    difficulty: opts.difficulty ?? 'normal',
+  });
+  const dayNight = new DayNightSystem(restored.dayNight ?? { time: restored.time || 1000 });
+  const farming = new FarmingSystem(restored.farming);
   const containers = restored.containers;
   const sky = new Sky(scene, VIEW_DIST);
   const cam = new FirstPersonCamera(camera, renderer.domElement);
@@ -97,6 +116,14 @@ export function start(opts = {}) {
   dropGroup.name = 'item-drops';
   scene.add(dropGroup);
   const dropMeshes = new Map();
+  const cropGroup = new THREE.Group();
+  cropGroup.name = 'crops';
+  scene.add(cropGroup);
+  const cropMeshes = new Map();
+  const hostileGroup = new THREE.Group();
+  hostileGroup.name = 'night-hostiles';
+  scene.add(hostileGroup);
+  const hostileMeshes = new Map();
   const lookDirection = new THREE.Vector3();
   let selectedBlock = null;
   let lastPlacedPosition = null;
@@ -162,8 +189,7 @@ export function start(opts = {}) {
   buildRegion();
   cam.spawn();
   if (Array.isArray(restored.player.position)) camera.position.fromArray(restored.player.position);
-  hud.setHealth(restored.player.health ?? 20);
-  hud.setHunger(restored.player.hunger ?? 20);
+  hud.updateSurvival(survival, dayNight, farming);
   hud.updateInventory(inventory);
   if (!loadResult.ok) hud.setSaveStatus(`存档损坏：${loadResult.error.message}；已安全新建世界`, true);
 
@@ -173,12 +199,15 @@ export function start(opts = {}) {
   });
   const makeState = () => createGameState({
     seed,
-    player: { position: camera.position.toArray(), health: hud.health, hunger: hud.hunger },
+    player: { position: camera.position.toArray(), health: survival.health, hunger: survival.hunger },
     inventory,
     time: gameTime,
     world,
     containers,
     entities: drops.serialize(),
+    survival: survival.serialize(),
+    dayNight: dayNight.serialize(),
+    farming: farming.serialize(),
   });
   const persist = () => {
     saveToStorage(localStorage, makeState());
@@ -207,7 +236,46 @@ export function start(opts = {}) {
       mesh.position.fromArray(entity.position);
     }
   };
+  const syncSurvivalMeshes = () => {
+    const liveCrops = new Set();
+    for (const [key, plot] of farming.plots) {
+      if (!plot.crop) continue;
+      liveCrops.add(key);
+      let mesh = cropMeshes.get(key);
+      if (!mesh) {
+        const color = plot.crop === 'wheat' ? 0xd9bb48 : plot.crop === 'carrots' ? 0x55a832 : 0x77a545;
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1, 0.32), new THREE.MeshLambertMaterial({ color }));
+        cropMeshes.set(key, mesh);
+        cropGroup.add(mesh);
+      }
+      const height = 0.12 + plot.stage * 0.1;
+      mesh.scale.y = height;
+      mesh.position.set(plot.position[0] + 0.5, plot.position[1] + height / 2 + 0.51, plot.position[2] + 0.5);
+    }
+    for (const [key, mesh] of cropMeshes) if (!liveCrops.has(key)) { cropGroup.remove(mesh); cropMeshes.delete(key); }
+
+    const liveMobs = new Set(dayNight.hostiles.map((mob) => mob.id));
+    for (const mob of dayNight.hostiles) {
+      let mesh = hostileMeshes.get(mob.id);
+      if (!mesh) {
+        mesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.55), new THREE.MeshLambertMaterial({ color: 0x4e8d50 }));
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        if (forward.lengthSq() < 0.01) forward.set(0, 0, -1);
+        forward.normalize();
+        mesh.position.copy(camera.position).addScaledVector(forward, 5 + mob.id * 0.35);
+        mesh.position.x += (mob.id % 3 - 1) * 1.2;
+        mesh.position.y -= 0.72;
+        hostileMeshes.set(mob.id, mesh);
+        hostileGroup.add(mesh);
+      }
+      mesh.material.color.setHex(mob.burning ? 0xff6d22 : 0x4e8d50);
+    }
+    for (const [id, mesh] of hostileMeshes) if (!liveMobs.has(id)) { hostileGroup.remove(mesh); hostileMeshes.delete(id); }
+  };
   syncDropMeshes();
+  syncSurvivalMeshes();
 
   const refreshSelection = () => {
     camera.getWorldDirection(lookDirection);
@@ -251,13 +319,90 @@ export function start(opts = {}) {
     return placed;
   };
   const die = () => {
+    survival.damage(survival.maxHealth, survival.lastDamage?.source ?? 'command');
     const spawned = inventory.dropAll(camera.position.toArray());
     for (const drop of spawned) drops.spawn(drop.itemId, drop.count, drop.position);
     syncDropMeshes();
     hud.updateInventory(inventory);
+    hud.updateSurvival(survival, dayNight, farming);
     hud.setActionStatus(`死亡掉落 ${spawned.length} 组物品`);
     persist();
     return spawned.length;
+  };
+  const respawn = () => {
+    if (!survival.dead) return false;
+    camera.position.fromArray(survival.respawn([cam.spawnX, cam.spawnY, cam.spawnZ]));
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(`已在${survival.spawnPoint ? '床边' : '世界出生点'}重生`);
+    persist();
+    return true;
+  };
+  const applyDamage = (source = 'hostile', amount = 3) => {
+    const applied = source === 'fall' ? survival.fall(amount)
+      : source === 'drowning' ? survival.drown(amount)
+        : source === 'melee' ? survival.melee(amount)
+          : survival.hostileHit(amount);
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(`${source} 伤害 ${applied.toFixed(1)}${survival.dead ? ' · 你死了，按 P 重生' : ''}`);
+    if (survival.dead) die();
+    return applied;
+  };
+  const eatSelected = () => {
+    const ate = survival.eat(inventory);
+    hud.updateInventory(inventory);
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(ate ? '食物恢复了饥饿与饱和度' : '当前物品不能吃，或饥饿值已满');
+    if (ate) persist();
+    return ate;
+  };
+  const selectedGround = () => selectedBlock?.position ?? [Math.floor(camera.position.x), Math.floor(camera.position.y - 2), Math.floor(camera.position.z)];
+  const tillSelected = () => {
+    const position = selectedGround();
+    const tilled = farming.till(world, position);
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(tilled ? `已开垦耕地 ${position.join(',')}` : '只能开垦草方块或泥土');
+    if (tilled) { buildRegion(); syncSurvivalMeshes(); persist(); }
+    return tilled;
+  };
+  const plantOrHarvest = () => {
+    const position = selectedGround();
+    const plot = farming.get(position);
+    let result = null;
+    if (plot?.crop && plot.stage >= 7) result = farming.harvest(position, inventory);
+    else result = farming.plant(position, inventory) ? { planted: true } : null;
+    hud.updateInventory(inventory);
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(result?.planted ? '已播种；光照 ≥ 9 时随时间生长' : result ? `收获 ${result.produce} ×${result.produceCount}` : '请选择种子/胡萝卜/马铃薯并对准耕地');
+    if (result) { syncSurvivalMeshes(); persist(); }
+    return result;
+  };
+  const advanceWorld = (ticks = 1200) => {
+    dayNight.advance(ticks, survival.difficulty);
+    farming.tick(ticks, Math.round(dayNight.brightness * 15));
+    survival.tick(ticks / 20);
+    sky.setBrightness(dayNight.brightness);
+    hud.updateSurvival(survival, dayNight, farming);
+    syncSurvivalMeshes();
+    return { dayNight: dayNight.snapshot(), crops: farming.serialize(), survival: survival.serialize() };
+  };
+  const sleep = () => {
+    const slept = dayNight.sleep(camera.position.toArray(), survival);
+    sky.setBrightness(dayNight.brightness);
+    hud.updateSurvival(survival, dayNight, farming);
+    syncSurvivalMeshes();
+    hud.setActionStatus(slept ? '已睡过夜晚，并设置重生点' : '只能在夜晚睡觉');
+    if (slept) persist();
+    return slept;
+  };
+  const cycleDifficulty = () => {
+    const levels = ['peaceful', 'easy', 'normal', 'hard'];
+    survival.setDifficulty(levels[(levels.indexOf(survival.difficulty) + 1) % levels.length]);
+    if (survival.difficulty === 'peaceful') dayNight.hostiles.length = 0;
+    syncSurvivalMeshes();
+    hud.updateSurvival(survival, dayNight, farming);
+    hud.setActionStatus(`难度已切换为 ${survival.difficulty}`);
+    persist();
+    return survival.difficulty;
   };
 
   // ---- pointer lock awareness ----
@@ -284,6 +429,15 @@ export function start(opts = {}) {
       persist();
     } else if (event.code === 'KeyF') collectDrops();
     else if (event.code === 'KeyK') die();
+    else if (event.code === 'KeyP') respawn();
+    else if (event.code === 'KeyH') eatSelected();
+    else if (event.code === 'KeyJ') applyDamage('hostile', 3);
+    else if (event.code === 'KeyB') sleep();
+    else if (event.code === 'KeyT') tillSelected();
+    else if (event.code === 'KeyG') plantOrHarvest();
+    else if (event.code === 'KeyR') advanceWorld(1200);
+    else if (event.code === 'KeyN') advanceWorld(12000);
+    else if (event.code === 'KeyD') cycleDifficulty();
     else if (event.code === 'KeyE') {
       inventoryOpen = !inventoryOpen;
       if (inventoryOpen && document.pointerLockElement) document.exitPointerLock();
@@ -313,12 +467,20 @@ export function start(opts = {}) {
 
   // ---- render loop ----
   const clock = new THREE.Clock();
+  let survivalVisualClock = 0;
   const autosaveId = window.setInterval(persist, 5000);
   function render() {
     requestAnimationFrame(render);
     const dt = Math.min(clock.getDelta(), 0.1);
     cam.update(dt);
     gameTime += dt;
+    dayNight.advance(dt * 20, survival.difficulty);
+    survival.tick(dt);
+    farming.tick(dt * 20, Math.round(dayNight.brightness * 15));
+    survivalVisualClock += dt;
+    if (survivalVisualClock >= 0.5) { syncSurvivalMeshes(); survivalVisualClock = 0; }
+    sky.setBrightness(dayNight.brightness);
+    hud.updateSurvival(survival, dayNight, farming);
     sky.update(camera);
     refreshSelection();
     if (miningHeld) mineSelected(dt);
@@ -347,10 +509,15 @@ export function start(opts = {}) {
     drops,
     dropGroup,
     mining,
+    survival,
+    dayNight,
+    farming,
+    cropGroup,
+    hostileGroup,
     loadResult,
     get gameTime() { return gameTime; },
     autosaveId,
-    actions: { mineSelected, collectDrops, placeCurrent, die, persist, refreshSelection },
+    actions: { mineSelected, collectDrops, placeCurrent, die, respawn, applyDamage, eatSelected, tillSelected, plantOrHarvest, advanceWorld, sleep, cycleDifficulty, persist, refreshSelection },
     get selectedBlock() { return selectedBlock; },
     get lastPlacedPosition() { return lastPlacedPosition; },
     resize,

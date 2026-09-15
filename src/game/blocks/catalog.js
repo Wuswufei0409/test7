@@ -11,6 +11,17 @@ const definitions = [
   ['ice', 0.5], ['coral_block', 1.5], ['prismarine', 2], ['sea_lantern', 0.8],
 ];
 
+const itemDefinitions = [
+  ['apple', { food: 4, saturation: 2.4 }],
+  ['bread', { food: 5, saturation: 6 }],
+  ['carrot', { food: 3, saturation: 3.6, plantable: 'carrots' }],
+  ['potato', { food: 1, saturation: 0.6, plantable: 'potatoes' }],
+  ['wheat', {}],
+  ['wheat_seeds', { plantable: 'wheat' }],
+  ['bed', { maxStack: 1 }],
+  ['wooden_hoe', { maxStack: 1 }],
+];
+
 export const AIR = 'air';
 
 export const BLOCKS = Object.freeze(Object.fromEntries(definitions.map(([id, hardness]) => [
@@ -20,9 +31,14 @@ export const BLOCKS = Object.freeze(Object.fromEntries(definitions.map(([id, har
 
 export const BLOCK_IDS = Object.freeze(Object.keys(BLOCKS));
 
+export const ITEMS = Object.freeze(Object.fromEntries(itemDefinitions.map(([id, extra]) => [
+  id,
+  Object.freeze({ id, itemId: id, maxStack: 64, placeable: false, solid: false, ...extra }),
+])));
+
 export function getBlockDefinition(id) {
   if (id === AIR) return { id: AIR, hardness: 0, placeable: false, solid: false, replaceable: true };
-  return BLOCKS[id] ?? null;
+  return BLOCKS[id] ?? ITEMS[id] ?? null;
 }
 
 export function requireBlockDefinition(id) {
@@ -30,4 +46,3 @@ export function requireBlockDefinition(id) {
   if (!definition) throw new Error(`Unknown block: ${id}`);
   return definition;
 }
-
